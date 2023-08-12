@@ -1,4 +1,4 @@
-import urllib3 as u3
+import requests
 import re
 import math as m
 from typing import Iterator, Dict, List, Tuple
@@ -8,16 +8,14 @@ MIN_PROB = .0
 
 def download_book(url: str, filename: str = 'book.txt'):
     """Download book from url and store in file."""
-    http = u3.PoolManager()
-    response = http.request("GET", url)
-
-    if response.status == 200:
-        with open(filename, 'wb') as file:
-            file.write(response.data)
+    response = requests.get(url, timeout=15)
+    if response.status_code == 200:
+        with open(filename, 'w') as file:
+            file.write(response.text)
     else:
         print('Download Error!')
 
-    print(f'Download status: {response.status}')
+    print(f'Download status: {response.status_code}')
 
 def read_corps(filename: str, encoding="utf-8") -> str:
     """Read and return corpus of data from file."""
@@ -88,6 +86,27 @@ def download_default_english_book():
     url = "https://www.gutenberg.org/cache/epub/2600/pg2600.txt"
     download_book(url, 'book.txt')
 
+def encrypt_substitution(sequence: str, key: str, alphabet: str) -> str:
+    if len(key) != len(alphabet):
+        print("Key and alphabet should be equal in length!")
+        return ''
+
+    mapping: Dict[str, str] = defaultdict(str)
+    mapping.update([(alphabet[x], key[x]) for x in range(len(alphabet))])
+
+    cipher = ''.join(map(lambda x: mapping[x], sequence))
+    return cipher
+
+def decrypt_substitution(sequence: str, key: str, alphabet: str) -> str:
+    if len(key) != len(alphabet):
+        print("Key and alphabet should be equal in length!")
+        return ''
+
+    mapping: Dict[str, str] = defaultdict(str)
+    mapping.update([(key[x], alphabet[x]) for x in range(len(alphabet))])
+
+    text = ''.join(map(lambda x: mapping[x], sequence))
+    return text
+
 if __name__ == "__main__":
     pass
-
