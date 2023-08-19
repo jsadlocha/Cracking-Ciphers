@@ -1,6 +1,7 @@
 import requests
 import re
 import math as m
+import random
 from typing import Iterator, Dict, List, Tuple
 from collections import defaultdict
 
@@ -25,7 +26,7 @@ def read_corps(filename: str, encoding="utf-8") -> str:
 
 def preprocess_text(corps: str) -> str:
     """Clean text from uncecessary characters."""
-    pattern = r'[^a-z ]'
+    pattern = r'[^a-z, ]'
     text = corps.lower()
     text = re.sub(pattern, "", text)
     text = re.sub(r'\s{2,}', " ", text)
@@ -36,7 +37,7 @@ def generate_letters_pairs(corps: str) -> Iterator[str]:
     for idx in range(len(corps)-1):
         yield corps[idx:idx+2]
 
-def calc_probability_for_pairs(corps: str) -> Dict[str, float]:
+def get_probability_for_pairs(corps: str) -> Dict[str, float]:
     """Calculate transition probability of pairs for given corpus of data."""
     global MIN_PROB
     freq_pair: Dict[str, float] = defaultdict(float)
@@ -50,7 +51,7 @@ def calc_probability_for_pairs(corps: str) -> Dict[str, float]:
 
     return freq_pair
 
-def calc_probability_for_letters(corps: str) -> Dict[str, float]:
+def get_probability_for_letters(corps: str) -> Dict[str, float]:
     """Calculate probability of the given letters."""
     freq: Dict[str, float] = defaultdict(float)
     for letter in corps:
@@ -71,15 +72,16 @@ def get_loglikelihood_from_dict(pair: str, pair_freq: Dict[str, float]) -> float
     if pair in pair_freq:
         log_prob = m.log(pair_freq[pair])
     else:
-        log_prob = MIN_PROB
+        log_prob = m.log(MIN_PROB)
 
     return log_prob
 
-def calc_likelihood_for_sequence(sequence: str, pair_freq: Dict[str, float]) -> float:
+def get_likelihood_for_sequence(sequence: str, pair_freq: Dict[str, float]) -> float:
     """Calculate likelihood for given sequence."""
     iterator = generate_letters_pairs(sequence)
+    iterator = list(iterator)
     likelihood = sum((get_loglikelihood_from_dict(x, pair_freq) for x in iterator))
-    return m.exp(likelihood)
+    return likelihood
 
 def download_default_english_book():
     """Download example book."""
@@ -107,6 +109,12 @@ def decrypt_substitution(sequence: str, key: str, alphabet: str) -> str:
 
     text = ''.join(map(lambda x: mapping[x], sequence))
     return text
+
+def random_mutate_swap(sequence: List[str]) -> List[str]:
+    idx1, idx2 = random.sample(range(len(sequence)), 2)
+    seq = sequence[:]
+    seq[idx1], seq[idx2] = seq[idx2], seq[idx1]
+    return seq
 
 if __name__ == "__main__":
     pass
